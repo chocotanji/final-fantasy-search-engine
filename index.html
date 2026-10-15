@@ -23,14 +23,17 @@
       </p>
 
       <form id="search-form">
-        <label class="sr-only" for="search-input">
-          Search by name
-        </label>
-        <input
-          id="search-input"
-          type="search"
-          placeholder="Search Cloud, Bomb, Final Fantasy..."
-        >
+        <div class="search-field">
+          <label class="sr-only" for="search-input">
+            Search by name
+          </label>
+          <span id="game-search-prefix" class="game-search-prefix" hidden>Final Fantasy</span>
+          <input
+            id="search-input"
+            type="search"
+            placeholder="Search Cloud, Bomb, Final Fantasy..."
+          >
+        </div>
         <button type="submit">Search</button>
       </form>
 

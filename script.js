@@ -5,6 +5,7 @@ const PAGE_SIZE = 20;
 // Find the HTML elements.
 const searchForm = document.querySelector("#search-form");
 const searchInput = document.querySelector("#search-input");
+const gameSearchPrefix = document.querySelector("#game-search-prefix");
 const categoryFilter = document.querySelector("#category-filter");
 const gameFilter = document.querySelector("#game-filter");
 const resultsContainer = document.querySelector("#results");
@@ -85,6 +86,48 @@ function normalizeName(value) {
     .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLocaleUpperCase();
+}
+
+function toRomanNumeral(value) {
+  const numerals = [
+    [1000, "M"], [900, "CM"], [500, "D"], [400, "CD"],
+    [100, "C"], [90, "XC"], [50, "L"], [40, "XL"],
+    [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]
+  ];
+  let number = Number(value);
+  if (!Number.isInteger(number) || number < 1 || number > 3999) return "";
+
+  let roman = "";
+  numerals.forEach(([value, symbol]) => {
+    while (number >= value) {
+      roman += symbol;
+      number -= value;
+    }
+  });
+  return roman;
+}
+
+function matchesGameQuery(game, query) {
+  const titlePrefix = normalizeName("Final Fantasy");
+  const normalizedTitle = normalizeName(game.name);
+  const titleSuffix = normalizedTitle.startsWith(titlePrefix)
+    ? normalizedTitle.slice(titlePrefix.length).trim()
+    : normalizedTitle;
+  const querySuffix = query.trim().replace(/^final fantasy\s*/i, "");
+  const numericTitle = querySuffix.match(/^(\d+)(-\d+)?$/);
+  const normalizedQuery = numericTitle
+    ? `${toRomanNumeral(numericTitle[1])}${numericTitle[2] || ""}`
+    : normalizeName(querySuffix);
+
+  return titleSuffix.startsWith(normalizedQuery);
+}
+
+function updateGameSearchField() {
+  const isGames = categoryFilter.value === "games";
+  gameSearchPrefix.hidden = !isGames;
+  searchInput.placeholder = isGames
+    ? "Type a number or Roman numeral, e.g. 7 or VII"
+    : "Search Cloud, Bomb, or a game name...";
 }
 
 function getCatalogKey(category, gameId) {
@@ -224,10 +267,12 @@ async function fetchResults(append = false) {
   if (category === "games") {
     let filteredGames = games;
 
+    if (gameId) {
+      filteredGames = filteredGames.filter((game) => String(game.id) === gameId);
+    }
+
     if (query) {
-      filteredGames = games.filter((game) =>
-        normalizeName(game.name).startsWith(normalizeName(query))
-      );
+      filteredGames = filteredGames.filter((game) => matchesGameQuery(game, query));
     }
 
     if (!filteredGames.length) {
@@ -525,7 +570,7 @@ searchInput.addEventListener("input", () => {
 categoryFilter.addEventListener("change", () => {
   currentPage = 1;
   gameFilter.value = "";
-  gameFilter.disabled = categoryFilter.value === "games";
+  updateGameSearchField();
   updateAlphabetIndex();
   fetchResults();
 });
@@ -545,7 +590,7 @@ loadMoreButton.addEventListener("click", () => {
 // Start the website.
 async function init() {
   createAlphabetIndex();
-  gameFilter.disabled = categoryFilter.value === "games";
+  updateGameSearchField();
   updateAlphabetIndex();
 
   await loadGames();
