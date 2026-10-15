@@ -13,8 +13,27 @@ const resultCount = document.querySelector("#result-count");
 const loadMoreButton = document.querySelector("#load-more");
 const alphabetIndex = document.querySelector("#alphabet-index");
 const letterButtons = document.querySelector("#letter-buttons");
+const profileDialog = document.querySelector("#profile-dialog");
+const profileContent = document.querySelector("#profile-content");
+const profileCloseButton = document.querySelector("#profile-close");
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const CATALOG_PAGE_SIZE = 100;
+const PROFILE_TAG_FIELDS = ["gameName", "category", "role", "race", "platform"];
+const PROFILE_HIDDEN_FIELDS = new Set([
+  "id",
+  "name",
+  "imageUrl",
+  "thumbnailUrl",
+  "description",
+  ...PROFILE_TAG_FIELDS
+]);
+const PROFILE_LABELS = {
+  releaseYear: "Release year",
+  isMainSeries: "Main series",
+  hitPoints: "HP",
+  magicAttack: "Magic attack",
+  magicDefense: "Magic defense"
+};
 
 // Store data and current search settings.
 let games = [];
@@ -259,6 +278,94 @@ async function fetchResults(append = false) {
   }
 }
 
+function formatProfileValue(value) {
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (Array.isArray(value)) return value.join(", ");
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function formatProfileLabel(key) {
+  return PROFILE_LABELS[key] || key.replace(/([A-Z])/g, " $1").replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function openProfile(item) {
+  profileContent.replaceChildren();
+
+  const layout = document.createElement("article");
+  layout.className = "profile-layout";
+
+  const imageUrl = item.thumbnailUrl || item.imageUrl;
+  if (imageUrl) {
+    const image = document.createElement("img");
+    image.className = "profile-image";
+    image.src = imageUrl;
+    image.alt = `Artwork for ${item.name || "Final Fantasy entry"}`;
+    image.addEventListener("error", () => image.remove());
+    layout.appendChild(image);
+  }
+
+  const summary = document.createElement("div");
+  summary.className = "profile-summary";
+
+  const category = document.createElement("p");
+  category.className = "profile-eyebrow";
+  category.textContent = categoryFilter.selectedOptions[0].textContent;
+  summary.appendChild(category);
+
+  const title = document.createElement("h2");
+  title.id = "profile-title";
+  title.textContent = item.name || "Unnamed entry";
+  summary.appendChild(title);
+
+  const tags = [
+    ...PROFILE_TAG_FIELDS.map((field) => item[field]),
+    item.isMainSeries ? "Main Series" : null
+  ].filter(Boolean);
+
+  if (tags.length) {
+    const tagList = document.createElement("div");
+    tagList.className = "profile-tags";
+    tags.forEach((tag) => {
+      const chip = document.createElement("span");
+      chip.className = "profile-tag";
+      chip.textContent = tag;
+      tagList.appendChild(chip);
+    });
+    summary.appendChild(tagList);
+  }
+
+  if (item.description) {
+    const description = document.createElement("p");
+    description.className = "profile-description";
+    description.textContent = item.description;
+    summary.appendChild(description);
+  }
+
+  const details = Object.entries(item).filter(([key, value]) =>
+    !PROFILE_HIDDEN_FIELDS.has(key) && value !== null && value !== undefined && value !== ""
+  );
+
+  if (details.length) {
+    const detailList = document.createElement("dl");
+    detailList.className = "profile-details";
+    details.forEach(([key, value]) => {
+      const row = document.createElement("div");
+      const label = document.createElement("dt");
+      label.textContent = formatProfileLabel(key);
+      const text = document.createElement("dd");
+      text.textContent = formatProfileValue(value);
+      row.append(label, text);
+      detailList.appendChild(row);
+    });
+    summary.appendChild(detailList);
+  }
+
+  layout.appendChild(summary);
+  profileContent.appendChild(layout);
+  profileDialog.showModal();
+}
+
 // Create and display result cards.
 function showResults(items, append = false) {
   if (!append) {
@@ -266,8 +373,11 @@ function showResults(items, append = false) {
   }
 
   items.forEach((item) => {
-    const card = document.createElement("article");
+    const card = document.createElement("button");
+    card.type = "button";
     card.className = "result-card";
+    card.setAttribute("aria-label", `Open profile: ${item.name || "Unnamed entry"}`);
+    card.addEventListener("click", () => openProfile(item));
 
     // Add artwork if available.
     const imageUrl = item.thumbnailUrl || item.imageUrl;
@@ -277,7 +387,7 @@ function showResults(items, append = false) {
 
       image.className = "result-image";
       image.src = imageUrl;
-      image.alt = `Artwork for ${item.name || "Final Fantasy entry"}`;
+      image.alt = "";
       image.loading = "lazy";
 
       image.addEventListener("error", () => {
@@ -294,35 +404,6 @@ function showResults(items, append = false) {
     title.textContent = item.name || "Unnamed entry";
 
     content.appendChild(title);
-
-    // Choose details based on the selected category.
-    let details = [];
-
-    if (categoryFilter.value === "games") {
-      details = [
-        item.releaseYear,
-        item.platform
-      ];
-    } else if (categoryFilter.value === "characters") {
-      details = [
-        item.gameName,
-        item.role,
-        item.race,
-        item.description
-      ];
-    } else {
-      details = [
-        item.gameName,
-        item.category,
-        item.description
-      ];
-    }
-
-    details.filter(Boolean).forEach((detail) => {
-      const paragraph = document.createElement("p");
-      paragraph.textContent = detail;
-      content.appendChild(paragraph);
-    });
 
     card.appendChild(content);
     resultsContainer.appendChild(card);
@@ -348,6 +429,11 @@ function showResults(items, append = false) {
     displayedCount >= totalCount ||
     items.length === 0;
 }
+
+profileCloseButton.addEventListener("click", () => profileDialog.close());
+profileDialog.addEventListener("click", (event) => {
+  if (event.target === profileDialog) profileDialog.close();
+});
 
 // Handle search submission.
 searchForm.addEventListener("submit", (event) => {
