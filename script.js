@@ -48,6 +48,7 @@ let activeController;
 let searchTimer;
 let profileRequestSequence = 0;
 const catalogCache = new Map();
+const profileDetailsCache = new Map();
 
 // Get the items from the API response.
 function getItems(data) {
@@ -77,6 +78,26 @@ async function requestAPI(resource, options = {}, signal) {
   }
 
   return response.json();
+}
+
+function loadProfileDetails(resource, id) {
+  const key = `${resource}:${id}`;
+  if (!profileDetailsCache.has(key)) {
+    const request = requestAPI(resource, { id }).catch((error) => {
+      profileDetailsCache.delete(key);
+      throw error;
+    });
+    profileDetailsCache.set(key, request);
+  }
+
+  return profileDetailsCache.get(key);
+}
+
+function prefetchProfileDetails(item) {
+  const resource = item._profileType || categoryFilter.value;
+  if (["characters", "monsters"].includes(resource) && item.id) {
+    loadProfileDetails(resource, item.id).catch(() => {});
+  }
 }
 
 function normalizeName(value) {
@@ -433,7 +454,7 @@ async function openProfile(item) {
   if (!needsDetails) return;
 
   try {
-    const details = await requestAPI(profileType, { id: item.id });
+    const details = await loadProfileDetails(profileType, item.id);
     if (sequence !== profileRequestSequence || !profileDialog.open) return;
 
     renderProfile({ ...initialProfile, ...details, _profileType: profileType });
@@ -462,6 +483,12 @@ function showResults(items, append = false) {
     card.className = "result-card";
     card.setAttribute("aria-label", `Open profile: ${item.name || "Unnamed entry"}`);
     card.addEventListener("click", () => openProfile(item));
+    let prefetchTimer;
+    card.addEventListener("pointerenter", () => {
+      prefetchTimer = setTimeout(() => prefetchProfileDetails(item), 100);
+    });
+    card.addEventListener("pointerleave", () => clearTimeout(prefetchTimer));
+    card.addEventListener("focus", () => prefetchProfileDetails(item));
 
     // Add artwork if available.
     const imageUrl = item.thumbnailUrl || item.imageUrl;
