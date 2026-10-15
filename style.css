@@ -112,16 +112,6 @@ input {
   background: transparent;
 }
 
-.game-search-prefix {
-  padding-left: 14px;
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-.game-search-prefix[hidden] {
-  display: none;
-}
-
 button {
   padding: 0 20px;
   background: var(--accent);
@@ -133,6 +123,12 @@ button {
 
 button:hover {
   opacity: 0.85;
+}
+
+button:disabled,
+input:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 input:focus-visible,
