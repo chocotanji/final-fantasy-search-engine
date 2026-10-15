@@ -11,12 +11,19 @@ const resultsContainer = document.querySelector("#results");
 const statusText = document.querySelector("#status");
 const resultCount = document.querySelector("#result-count");
 const loadMoreButton = document.querySelector("#load-more");
+const alphabetIndex = document.querySelector("#alphabet-index");
+const letterButtons = document.querySelector("#letter-buttons");
+const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const CATALOG_PAGE_SIZE = 100;
 
 // Store data and current search settings.
 let games = [];
 let currentPage = 1;
 let totalCount = 0;
-let isLoading = false;
+let requestSequence = 0;
+let activeController;
+let searchTimer;
+const catalogCache = new Map();
 
 // Get the items from the API response.
 function getItems(data) {
@@ -28,7 +35,7 @@ function getItems(data) {
 }
 
 // Send a request to our Vercel backend.
-async function requestAPI(resource, options = {}) {
+async function requestAPI(resource, options = {}, signal) {
   const url = new URL(API_URL, window.location.origin);
 
   url.searchParams.set("resource", resource);
@@ -39,13 +46,114 @@ async function requestAPI(resource, options = {}) {
     }
   });
 
-  const response = await fetch(url);
+  const response = await fetch(url, { signal });
 
   if (!response.ok) {
     throw new Error(`Request failed: ${response.status}`);
   }
 
   return response.json();
+}
+
+function normalizeName(value) {
+  return (value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLocaleUpperCase();
+}
+
+function getCatalogKey(category, gameId) {
+  return `${category}:${gameId || "all"}`;
+}
+
+function getCatalog(category, gameId) {
+  const key = getCatalogKey(category, gameId);
+  if (!catalogCache.has(key)) {
+    catalogCache.set(key, {
+      items: [],
+      nextPage: 1,
+      totalCount: null,
+      complete: false,
+      loading: null
+    });
+  }
+
+  return catalogCache.get(key);
+}
+
+async function loadNextCatalogPage(category, gameId, catalog) {
+  if (catalog.loading) {
+    await catalog.loading;
+    return;
+  }
+
+  if (catalog.complete) return;
+
+  catalog.loading = (async () => {
+    const data = await requestAPI(category, {
+      page: catalog.nextPage,
+      pageSize: CATALOG_PAGE_SIZE,
+      gameId
+    });
+    const items = getItems(data);
+
+    catalog.items.push(...items);
+    catalog.totalCount = data.totalCount ?? catalog.items.length;
+    catalog.nextPage += 1;
+    catalog.complete =
+      items.length === 0 || catalog.items.length >= catalog.totalCount;
+  })();
+
+  try {
+    await catalog.loading;
+  } finally {
+    catalog.loading = null;
+  }
+}
+
+async function ensurePrefixCatalog(category, gameId, prefix) {
+  const catalog = getCatalog(category, gameId);
+  const firstLetter = normalizeName(prefix).charAt(0);
+
+  while (
+    !catalog.complete &&
+    !catalog.items.some((item) => normalizeName(item.name).charAt(0) > firstLetter)
+  ) {
+    await loadNextCatalogPage(category, gameId, catalog);
+  }
+
+  return catalog.items.filter((item) =>
+    normalizeName(item.name).startsWith(normalizeName(prefix))
+  );
+}
+
+function updateAlphabetIndex() {
+  const supportsAlphabet = ["characters", "monsters"].includes(categoryFilter.value);
+  alphabetIndex.hidden = !supportsAlphabet;
+
+  const firstLetter = normalizeName(searchInput.value).charAt(0);
+  letterButtons.querySelectorAll("button").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.textContent === firstLetter));
+  });
+}
+
+function createAlphabetIndex() {
+  [...LETTERS].forEach((letter) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "letter-button";
+    button.textContent = letter;
+    button.setAttribute("aria-label", `Browse names starting with ${letter}`);
+    button.setAttribute("aria-pressed", "false");
+    button.addEventListener("click", () => {
+      searchInput.value = letter;
+      currentPage = 1;
+      updateAlphabetIndex();
+      fetchResults();
+    });
+    letterButtons.appendChild(button);
+  });
 }
 
 // Load games for the game filter.
@@ -69,11 +177,15 @@ async function loadGames() {
 
 // Search and display results.
 async function fetchResults(append = false) {
-  if (isLoading) return;
+  const sequence = ++requestSequence;
+  activeController?.abort();
+  activeController = new AbortController();
+  const { signal } = activeController;
 
   const category = categoryFilter.value;
   const query = searchInput.value.trim();
   const gameId = gameFilter.value;
+  updateAlphabetIndex();
 
   // For games, filter the list already fetched.
   if (category === "games") {
@@ -95,36 +207,44 @@ async function fetchResults(append = false) {
       return;
     }
 
+    totalCount = filteredGames.length;
     showResults(filteredGames, false);
     return;
   }
 
-  isLoading = true;
   statusText.textContent = "Loading results...";
   resultCount.textContent = "";
   loadMoreButton.disabled = true;
 
   try {
+    if (query) {
+      const items = await ensurePrefixCatalog(category, gameId, query);
+      if (sequence !== requestSequence) return;
+
+      totalCount = items.length;
+      showResults(items, false);
+      return;
+    }
+
     const options = {
       page: currentPage,
       pageSize: PAGE_SIZE
     };
 
-    if (query) {
-      options.query = query;
-    }
-
     if (gameId) {
       options.gameId = gameId;
     }
 
-    const data = await requestAPI(category, options);
+    const data = await requestAPI(category, options, signal);
+    if (sequence !== requestSequence) return;
+
     const items = getItems(data);
 
     totalCount = data.totalCount ?? items.length;
 
     showResults(items, append);
   } catch (error) {
+    if (error.name === "AbortError" || sequence !== requestSequence) return;
     console.error("API error:", error);
 
     resultsContainer.replaceChildren();
@@ -133,8 +253,9 @@ async function fetchResults(append = false) {
       "Could not load data. Check your connection and backend.";
     loadMoreButton.hidden = true;
   } finally {
-    isLoading = false;
-    loadMoreButton.disabled = false;
+    if (sequence === requestSequence) {
+      loadMoreButton.disabled = false;
+    }
   }
 }
 
@@ -231,8 +352,16 @@ function showResults(items, append = false) {
 // Handle search submission.
 searchForm.addEventListener("submit", (event) => {
   event.preventDefault();
+  clearTimeout(searchTimer);
   currentPage = 1;
   fetchResults();
+});
+
+searchInput.addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  currentPage = 1;
+  updateAlphabetIndex();
+  searchTimer = setTimeout(() => fetchResults(), 180);
 });
 
 // Handle category changes.
@@ -240,6 +369,7 @@ categoryFilter.addEventListener("change", () => {
   currentPage = 1;
   gameFilter.value = "";
   gameFilter.disabled = categoryFilter.value === "games";
+  updateAlphabetIndex();
   fetchResults();
 });
 
@@ -257,7 +387,9 @@ loadMoreButton.addEventListener("click", () => {
 
 // Start the website.
 async function init() {
+  createAlphabetIndex();
   gameFilter.disabled = categoryFilter.value === "games";
+  updateAlphabetIndex();
 
   await loadGames();
   fetchResults();

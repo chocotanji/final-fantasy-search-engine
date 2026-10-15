@@ -132,6 +132,42 @@ a:focus-visible {
   font-size: 0.85rem;
 }
 
+.alphabet-index {
+  margin-top: 24px;
+}
+
+.alphabet-index[hidden] {
+  display: none;
+}
+
+.alphabet-label {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.letter-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.letter-button {
+  width: 38px;
+  min-height: 38px;
+  padding: 0;
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.letter-button[aria-pressed="true"] {
+  background: var(--accent);
+  color: #17130a;
+  border-color: var(--accent);
+}
+
 .results-section {
   padding: 24px 0 64px;
   border-top: 1px solid var(--border);
