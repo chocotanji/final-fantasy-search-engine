@@ -18,17 +18,22 @@ const profileContent = document.querySelector("#profile-content");
 const profileCloseButton = document.querySelector("#profile-close");
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const CATALOG_PAGE_SIZE = 100;
-const PROFILE_TAG_FIELDS = ["gameName", "category", "role", "race", "platform"];
+const PROFILE_TAG_FIELDS = {
+  games: ["platform"],
+  characters: ["gameName"],
+  monsters: ["gameName", "category"]
+};
 const PROFILE_HIDDEN_FIELDS = new Set([
   "id",
   "name",
   "imageUrl",
   "thumbnailUrl",
-  "description"
+  "description",
+  "isMainSeries",
+  "_profileType"
 ]);
 const PROFILE_LABELS = {
   releaseYear: "Release year",
-  isMainSeries: "Main series",
   hitPoints: "HP",
   magicAttack: "Magic attack",
   magicDefense: "Magic defense"
@@ -147,7 +152,7 @@ async function ensurePrefixCatalog(category, gameId, prefix) {
 }
 
 function updateAlphabetIndex() {
-  const supportsAlphabet = ["characters", "monsters"].includes(categoryFilter.value);
+  const supportsAlphabet = categoryFilter.value !== "games";
   alphabetIndex.hidden = !supportsAlphabet;
 
   const firstLetter = normalizeName(searchInput.value).charAt(0);
@@ -205,15 +210,22 @@ async function fetchResults(append = false) {
   const gameId = gameFilter.value;
   updateAlphabetIndex();
 
+  if (category === "all" && !query) {
+    resultsContainer.replaceChildren();
+    resultCount.textContent = "";
+    statusText.textContent = "Choose a letter or type a name to browse all entries.";
+    loadMoreButton.hidden = true;
+    loadMoreButton.disabled = false;
+    return;
+  }
+
   // For games, filter the list already fetched.
   if (category === "games") {
     let filteredGames = games;
 
     if (query) {
       filteredGames = games.filter((game) =>
-        (game.name || "")
-          .toLowerCase()
-          .includes(query.toLowerCase())
+        normalizeName(game.name).startsWith(normalizeName(query))
       );
     }
 
@@ -236,8 +248,24 @@ async function fetchResults(append = false) {
 
   try {
     if (query) {
-      const items = await ensurePrefixCatalog(category, gameId, query);
+      const resources = category === "all" ? ["characters", "monsters"] : [category];
+      const catalogResults = await Promise.all(resources.map(async (resource) => {
+        const items = await ensurePrefixCatalog(resource, gameId, query);
+        return items.map((item) => ({ ...item, _profileType: resource }));
+      }));
       if (sequence !== requestSequence) return;
+
+      let items = catalogResults.flat();
+      if (category === "all") {
+        const matchingGames = games
+          .filter((game) =>
+            normalizeName(game.name).startsWith(normalizeName(query)) &&
+            (!gameId || String(game.id) === gameId)
+          )
+          .map((game) => ({ ...game, _profileType: "games" }));
+        items = [...matchingGames, ...items];
+        items.sort((first, second) => first.name.localeCompare(second.name));
+      }
 
       totalCount = items.length;
       showResults(items, false);
@@ -317,13 +345,16 @@ function openProfile(item) {
   title.textContent = item.name || "Unnamed entry";
   summary.appendChild(title);
 
-  const tagFields = categoryFilter.value === "characters"
-    ? ["gameName"]
-    : PROFILE_TAG_FIELDS;
-  const tags = [
-    ...tagFields.map((field) => item[field]),
-    item.isMainSeries ? "Main Series" : null
-  ].filter(Boolean);
+  const profileType = item._profileType || categoryFilter.value;
+  const typeLabels = {
+    games: "Game",
+    characters: "Character",
+    monsters: "Monster"
+  };
+  category.textContent = typeLabels[profileType] || "Entry";
+
+  const tagFields = PROFILE_TAG_FIELDS[profileType] || [];
+  const tags = tagFields.map((field) => item[field]).filter(Boolean);
 
   if (tags.length) {
     const tagList = document.createElement("div");
