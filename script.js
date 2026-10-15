@@ -24,8 +24,7 @@ const PROFILE_HIDDEN_FIELDS = new Set([
   "name",
   "imageUrl",
   "thumbnailUrl",
-  "description",
-  ...PROFILE_TAG_FIELDS
+  "description"
 ]);
 const PROFILE_LABELS = {
   releaseYear: "Release year",
@@ -318,8 +317,11 @@ function openProfile(item) {
   title.textContent = item.name || "Unnamed entry";
   summary.appendChild(title);
 
+  const tagFields = categoryFilter.value === "characters"
+    ? ["gameName"]
+    : PROFILE_TAG_FIELDS;
   const tags = [
-    ...PROFILE_TAG_FIELDS.map((field) => item[field]),
+    ...tagFields.map((field) => item[field]),
     item.isMainSeries ? "Main Series" : null
   ].filter(Boolean);
 
@@ -342,8 +344,9 @@ function openProfile(item) {
     summary.appendChild(description);
   }
 
+  const hiddenFields = new Set([...PROFILE_HIDDEN_FIELDS, ...tagFields]);
   const details = Object.entries(item).filter(([key, value]) =>
-    !PROFILE_HIDDEN_FIELDS.has(key) && value !== null && value !== undefined && value !== ""
+    !hiddenFields.has(key) && value !== null && value !== undefined && value !== ""
   );
 
   if (details.length) {
