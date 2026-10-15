@@ -17,6 +17,7 @@ module.exports = async function handler(req, res) {
 
 	const {
 		resource,
+		id,
 		query,
 		gameId,
 		page,
@@ -35,15 +36,23 @@ module.exports = async function handler(req, res) {
 		});
 	}
 
+	if (id !== undefined && !/^\d+$/.test(String(id))) {
+		return res.status(400).json({
+			error: "Invalid entry ID"
+		});
+	}
+
 	let endpoint = resource;
 
-	if (query && resource !== "games") {
+	if (id !== undefined) {
+		endpoint += `/${id}`;
+	} else if (query && resource !== "games") {
 		endpoint += "/search";
 	}
 
 	const url = new URL(`${BASE_URL}/${endpoint}`);
 
-	if (query && resource !== "games") {
+	if (id === undefined && query && resource !== "games") {
 		url.searchParams.set("query", query);
 	}
 

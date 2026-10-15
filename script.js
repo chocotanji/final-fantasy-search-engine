@@ -46,6 +46,7 @@ let totalCount = 0;
 let requestSequence = 0;
 let activeController;
 let searchTimer;
+let profileRequestSequence = 0;
 const catalogCache = new Map();
 
 // Get the items from the API response.
@@ -316,7 +317,7 @@ function formatProfileLabel(key) {
   return PROFILE_LABELS[key] || key.replace(/([A-Z])/g, " $1").replace(/^./, (letter) => letter.toUpperCase());
 }
 
-function openProfile(item) {
+function renderProfile(item, loading = false) {
   profileContent.replaceChildren();
 
   const layout = document.createElement("article");
@@ -375,6 +376,14 @@ function openProfile(item) {
     summary.appendChild(description);
   }
 
+  if (loading) {
+    const loadingMessage = document.createElement("p");
+    loadingMessage.className = "profile-loading";
+    loadingMessage.setAttribute("role", "status");
+    loadingMessage.textContent = "Loading full profile...";
+    summary.appendChild(loadingMessage);
+  }
+
   const hiddenFields = new Set([...PROFILE_HIDDEN_FIELDS, ...tagFields]);
   const details = Object.entries(item).filter(([key, value]) =>
     !hiddenFields.has(key) && value !== null && value !== undefined && value !== ""
@@ -397,7 +406,35 @@ function openProfile(item) {
 
   layout.appendChild(summary);
   profileContent.appendChild(layout);
+}
+
+async function openProfile(item) {
+  const sequence = ++profileRequestSequence;
+  const profileType = item._profileType || categoryFilter.value;
+  const initialProfile = { ...item, _profileType: profileType };
+  const needsDetails = ["characters", "monsters"].includes(profileType) && item.id;
+
+  renderProfile(initialProfile, needsDetails);
   profileDialog.showModal();
+
+  if (!needsDetails) return;
+
+  try {
+    const details = await requestAPI(profileType, { id: item.id });
+    if (sequence !== profileRequestSequence || !profileDialog.open) return;
+
+    renderProfile({ ...initialProfile, ...details, _profileType: profileType });
+  } catch (error) {
+    if (sequence !== profileRequestSequence || !profileDialog.open) return;
+
+    console.error("Could not load full profile:", error);
+    renderProfile(initialProfile);
+
+    const note = document.createElement("p");
+    note.className = "profile-loading";
+    note.textContent = "Some details could not be loaded.";
+    profileContent.querySelector(".profile-summary").appendChild(note);
+  }
 }
 
 // Create and display result cards.
