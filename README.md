@@ -1,4 +1,4 @@
-# MOOGLE Search
+# Final Fantasy Search Engine
 
 The context for this project is [MoogleAPI](https://github.com/jackfperryjr/moogleapi), a REST API that provides data about the *Final Fantasy* franchise, including games, characters, and monsters. This project explores how API data can be used to build a searchable website that helps users discover content across the franchise.
 
