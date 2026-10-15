@@ -24,7 +24,7 @@ function getItems(data) {
     return data;
   }
 
-  return data.items || [];
+  return data.items || data.results || [];
 }
 
 // Send a request to our Vercel backend.
