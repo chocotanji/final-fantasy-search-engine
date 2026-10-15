@@ -1,0 +1,79 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MOOGLE | Final Fantasy Search</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="#">MOOGLE<span>®</span></a>
+    <span class="header-label">FINAL FANTASY DATABASE</span>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">YOUR ADVENTURE STARTS HERE</p>
+      <h1>Explore the worlds<br>of Final Fantasy.</h1>
+      <p class="subtitle">
+        Discover games, characters, and monsters across the franchise.
+      </p>
+
+      <form id="search-form">
+        <label class="sr-only" for="search-input">
+          Search by name
+        </label>
+        <input
+          id="search-input"
+          type="search"
+          placeholder="Search Cloud, Bomb, Final Fantasy..."
+        >
+        <button type="submit">Search</button>
+      </form>
+
+      <div class="filters">
+        <div>
+          <label for="category-filter">Category</label>
+          <select id="category-filter">
+            <option value="games">Games</option>
+            <option value="characters">Characters</option>
+            <option value="monsters">Monsters</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="game-filter">Game</label>
+          <select id="game-filter">
+            <option value="">All games</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="results-section">
+      <div class="results-heading">
+        <h2>Search results</h2>
+        <span id="result-count"></span>
+      </div>
+
+      <p id="status" role="status" aria-live="polite">
+        Loading games...
+      </p>
+
+      <div id="results" class="results-grid"></div>
+
+      <button id="load-more" class="load-more" hidden>
+        Load more
+      </button>
+    </section>
+  </main>
+
+  <footer>
+    <p>MOOGLE is a fan-made project, not affiliated with Square Enix.</p>
+    <p>Data provided by MoogleAPI.</p>
+  </footer>
+</body>
+</html>
