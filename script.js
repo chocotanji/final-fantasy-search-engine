@@ -17,7 +17,7 @@ const profileDialog = document.querySelector("#profile-dialog");
 const profileContent = document.querySelector("#profile-content");
 const profileCloseButton = document.querySelector("#profile-close");
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const CATALOG_PAGE_SIZE = 100;
+const CATALOG_PAGE_SIZE = PAGE_SIZE;
 const PROFILE_TAG_FIELDS = {
   games: ["platform"],
   characters: ["gameName"],
@@ -47,6 +47,7 @@ let requestSequence = 0;
 let activeController;
 let searchTimer;
 let profileRequestSequence = 0;
+let prefixResults = [];
 const catalogCache = new Map();
 const profileDetailsCache = new Map();
 
@@ -303,7 +304,8 @@ async function fetchResults(append = false) {
       }
 
       totalCount = items.length;
-      showResults(items, false);
+      prefixResults = items;
+      showResults(items.slice(0, PAGE_SIZE), false);
       return;
     }
 
@@ -531,12 +533,10 @@ function showResults(items, append = false) {
     : "";
 
   // Only show Load more when additional results may exist.
-  const hasSearch = searchInput.value.trim() !== "";
   const isGames = categoryFilter.value === "games";
 
   loadMoreButton.hidden =
     isGames ||
-    hasSearch ||
     displayedCount >= totalCount ||
     items.length === 0;
 }
@@ -581,6 +581,12 @@ gameFilter.addEventListener("change", () => {
 
 // Load additional results.
 loadMoreButton.addEventListener("click", () => {
+  if (searchInput.value.trim() && categoryFilter.value !== "games") {
+    const offset = resultsContainer.children.length;
+    showResults(prefixResults.slice(offset, offset + PAGE_SIZE), true);
+    return;
+  }
+
   currentPage++;
   fetchResults(true);
 });
