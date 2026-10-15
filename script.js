@@ -388,54 +388,54 @@ function renderProfile(item, loading = false) {
   };
   category.textContent = typeLabels[profileType] || "Entry";
 
-  const tagFields = PROFILE_TAG_FIELDS[profileType] || [];
-  const tags = tagFields.map((field) => item[field]).filter(Boolean);
-
-  if (tags.length) {
-    const tagList = document.createElement("div");
-    tagList.className = "profile-tags";
-    tags.forEach((tag) => {
-      const chip = document.createElement("span");
-      chip.className = "profile-tag";
-      chip.textContent = tag;
-      tagList.appendChild(chip);
-    });
-    summary.appendChild(tagList);
-  }
-
-  if (item.description) {
-    const description = document.createElement("p");
-    description.className = "profile-description";
-    description.textContent = item.description;
-    summary.appendChild(description);
-  }
-
   if (loading) {
     const loadingMessage = document.createElement("p");
     loadingMessage.className = "profile-loading";
     loadingMessage.setAttribute("role", "status");
     loadingMessage.textContent = "Loading full profile...";
     summary.appendChild(loadingMessage);
-  }
+  } else {
+    const tagFields = PROFILE_TAG_FIELDS[profileType] || [];
+    const tags = tagFields.map((field) => item[field]).filter(Boolean);
 
-  const hiddenFields = new Set([...PROFILE_HIDDEN_FIELDS, ...tagFields]);
-  const details = Object.entries(item).filter(([key, value]) =>
-    !hiddenFields.has(key) && value !== null && value !== undefined && value !== ""
-  );
+    if (tags.length) {
+      const tagList = document.createElement("div");
+      tagList.className = "profile-tags";
+      tags.forEach((tag) => {
+        const chip = document.createElement("span");
+        chip.className = "profile-tag";
+        chip.textContent = tag;
+        tagList.appendChild(chip);
+      });
+      summary.appendChild(tagList);
+    }
 
-  if (details.length) {
-    const detailList = document.createElement("dl");
-    detailList.className = "profile-details";
-    details.forEach(([key, value]) => {
-      const row = document.createElement("div");
-      const label = document.createElement("dt");
-      label.textContent = formatProfileLabel(key);
-      const text = document.createElement("dd");
-      text.textContent = formatProfileValue(value);
-      row.append(label, text);
-      detailList.appendChild(row);
-    });
-    summary.appendChild(detailList);
+    if (item.description) {
+      const description = document.createElement("p");
+      description.className = "profile-description";
+      description.textContent = item.description;
+      summary.appendChild(description);
+    }
+
+    const hiddenFields = new Set([...PROFILE_HIDDEN_FIELDS, ...tagFields]);
+    const details = Object.entries(item).filter(([key, value]) =>
+      !hiddenFields.has(key) && value !== null && value !== undefined && value !== ""
+    );
+
+    if (details.length) {
+      const detailList = document.createElement("dl");
+      detailList.className = "profile-details";
+      details.forEach(([key, value]) => {
+        const row = document.createElement("div");
+        const label = document.createElement("dt");
+        label.textContent = formatProfileLabel(key);
+        const text = document.createElement("dd");
+        text.textContent = formatProfileValue(value);
+        row.append(label, text);
+        detailList.appendChild(row);
+      });
+      summary.appendChild(detailList);
+    }
   }
 
   layout.appendChild(summary);
