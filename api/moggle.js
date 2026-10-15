@@ -1,7 +1,16 @@
-
 const BASE_URL = "https://moogleapi.com/api";
 
 module.exports = async function handler(req, res) {
+  // Enable CORS for browser clients
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  // Handle browser preflight
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   // Only allow GET requests.
   if (req.method !== "GET") {
     return res.status(405).json({
@@ -24,7 +33,7 @@ module.exports = async function handler(req, res) {
     "monsters"
   ];
 
-  if (!allowedResources.includes(resource)) {
+  if (!resource || !allowedResources.includes(resource)) {
     return res.status(400).json({
       error: "Invalid resource"
     });
