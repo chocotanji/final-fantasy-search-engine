@@ -17,7 +17,7 @@ const profileDialog = document.querySelector("#profile-dialog");
 const profileContent = document.querySelector("#profile-content");
 const profileCloseButton = document.querySelector("#profile-close");
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const CATALOG_PAGE_SIZE = PAGE_SIZE;
+const CATALOG_PAGE_SIZE = 100;
 const PROFILE_TAG_FIELDS = {
   games: ["platform"],
   characters: ["gameName"],
@@ -126,61 +126,81 @@ function getCatalog(category, gameId) {
   const key = getCatalogKey(category, gameId);
   if (!catalogCache.has(key)) {
     catalogCache.set(key, {
-      items: [],
-      nextPage: 1,
+      pages: new Map(),
+      pageRequests: new Map(),
       totalCount: null,
-      complete: false,
-      loading: null
     });
   }
 
   return catalogCache.get(key);
 }
 
-async function loadNextCatalogPage(category, gameId, catalog) {
-  if (catalog.loading) {
-    await catalog.loading;
-    return;
-  }
+async function loadCatalogPage(category, gameId, catalog, page) {
+  if (catalog.pages.has(page)) return catalog.pages.get(page);
+  if (catalog.pageRequests.has(page)) return catalog.pageRequests.get(page);
 
-  if (catalog.complete) return;
-
-  catalog.loading = (async () => {
+  const request = (async () => {
     const data = await requestAPI(category, {
-      page: catalog.nextPage,
+      page,
       pageSize: CATALOG_PAGE_SIZE,
       gameId
     });
     const items = getItems(data);
 
-    catalog.items.push(...items);
-    catalog.totalCount = data.totalCount ?? catalog.items.length;
-    catalog.nextPage += 1;
-    catalog.complete =
-      items.length === 0 || catalog.items.length >= catalog.totalCount;
+    catalog.pages.set(page, items);
+    catalog.totalCount = data.totalCount ?? catalog.totalCount ?? items.length;
+    return items;
   })();
 
+  catalog.pageRequests.set(page, request);
   try {
-    await catalog.loading;
+    return await request;
   } finally {
-    catalog.loading = null;
+    catalog.pageRequests.delete(page);
   }
 }
 
 async function ensurePrefixCatalog(category, gameId, prefix) {
   const catalog = getCatalog(category, gameId);
+  const normalizedPrefix = normalizeName(prefix);
   const firstLetter = normalizeName(prefix).charAt(0);
+  const firstPage = await loadCatalogPage(category, gameId, catalog, 1);
+  if (!firstPage.length || !catalog.totalCount) return [];
 
-  while (
-    !catalog.complete &&
-    !catalog.items.some((item) => normalizeName(item.name).charAt(0) > firstLetter)
-  ) {
-    await loadNextCatalogPage(category, gameId, catalog);
+  const pageCount = Math.ceil(catalog.totalCount / CATALOG_PAGE_SIZE);
+  let low = 1;
+  let high = pageCount;
+
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    const items = await loadCatalogPage(category, gameId, catalog, middle);
+    const lastName = (items.at(-1)?.name || "").toLocaleUpperCase();
+
+    if (lastName < firstLetter) {
+      low = middle + 1;
+    } else {
+      high = middle;
+    }
   }
 
-  return catalog.items.filter((item) =>
-    normalizeName(item.name).startsWith(normalizeName(prefix))
-  );
+  const matches = [];
+  let passedPrefix = false;
+
+  for (let page = low; page <= pageCount && !passedPrefix; page++) {
+    const items = await loadCatalogPage(category, gameId, catalog, page);
+
+    for (const item of items) {
+      const normalizedName = normalizeName(item.name);
+      if (normalizedName.startsWith(normalizedPrefix)) {
+        matches.push(item);
+      } else if ((item.name || "").trim().toLocaleUpperCase() > normalizedPrefix) {
+        passedPrefix = true;
+        break;
+      }
+    }
+  }
+
+  return matches;
 }
 
 function updateAlphabetIndex() {
