@@ -227,7 +227,7 @@ main {
 
 input,
 select {
-  min-height: 48.5px;
+  height: 48.5px;
   border: 0;
   border-radius: 10px;
 }
