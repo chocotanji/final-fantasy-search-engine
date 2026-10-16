@@ -250,16 +250,16 @@ async function loadGames() {
   }
 }
 
+function updateLoadMoreLabel(loading = false) {
+  const remaining = totalCount - resultsContainer.children.length;
+  const count = Math.min(PAGE_SIZE, Math.max(0, remaining));
+  loadMoreButton.textContent = `${loading ? "Loading" : "Load"} ${count} more`;
+}
+
 // Search and display results.
 async function fetchResults(append = false) {
   const sequence = ++requestSequence;
-  if (append) {
-    const remaining = totalCount - resultsContainer.children.length;
-    const loadingCount = Math.min(PAGE_SIZE, Math.max(0, remaining));
-    loadMoreButton.textContent = `Loading ${loadingCount} more`;
-  } else {
-    loadMoreButton.textContent = "Load More...";
-  }
+  updateLoadMoreLabel(append);
   activeController?.abort();
   activeController = new AbortController();
   const { signal } = activeController;
@@ -365,7 +365,7 @@ async function fetchResults(append = false) {
   } finally {
     if (sequence === requestSequence) {
       loadMoreButton.disabled = false;
-      loadMoreButton.textContent = "Load More...";
+      updateLoadMoreLabel();
     }
   }
 }
@@ -570,6 +570,8 @@ function showResults(items, append = false) {
     isGames ||
     displayedCount >= totalCount ||
     items.length === 0;
+
+  updateLoadMoreLabel();
 }
 
 profileCloseButton.addEventListener("click", () => profileDialog.close());
