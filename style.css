@@ -207,8 +207,15 @@ main {
 
 .filters > div {
   display: grid;
-  width: 98px;
-  gap: 7px;
+  gap: 7.5px;
+}
+
+.filters > div:first-child {
+  width: 97.313px;
+}
+
+.filters > div:last-child {
+  width: 149px;
 }
 
 .filters label {
@@ -220,14 +227,14 @@ main {
 
 input,
 select {
-  min-height: 47px;
+  min-height: 48.5px;
   border: 0;
   border-radius: 10px;
 }
 
 select {
   width: 100%;
-  padding: 0 34px 0 12px;
+  padding: 0 34px 0 11.25px;
   appearance: none;
   background-color: var(--accent);
   background-image: url("/assets/chevron-down.svg");
@@ -248,7 +255,7 @@ select {
 #search-form {
   position: relative;
   display: flex;
-  flex: 1;
+  flex: 1 1 461px;
   min-width: 0;
 }
 
@@ -261,7 +268,7 @@ select {
 #search-input {
   width: 100%;
   min-width: 0;
-  padding: 0 15px 0 42px;
+  padding: 0 11.25px 0 38.75px;
   background: var(--text);
   color: var(--surface);
   font-family: "Epunda Sans:Medium", Arial, sans-serif;
@@ -423,13 +430,16 @@ select {
 .result-image {
   display: block;
   width: 100%;
-  aspect-ratio: 0.93;
+  aspect-ratio: 231.292 / 252;
   border-bottom: 3px solid var(--surface);
   background: #edf0ed;
   object-fit: cover;
 }
 
 .result-content {
+  display: flex;
+  flex: 1;
+  align-items: center;
   width: 100%;
   padding: 15px;
   transition: background-color 160ms ease, color 160ms ease;
@@ -653,7 +663,8 @@ footer p {
     flex-direction: column;
   }
 
-  .filters > div {
+  .filters > div:first-child,
+  .filters > div:last-child {
     width: auto;
     flex: 1;
   }
