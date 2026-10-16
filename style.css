@@ -211,6 +211,10 @@ main {
   gap: 7px;
 }
 
+.filters > div:last-child {
+  width: 280px;
+}
+
 .filters label {
   font-family: "Epunda Sans:SemiBold", Arial, sans-serif;
   font-size: 16px;
@@ -388,6 +392,7 @@ select {
 .results-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
   gap: 20px;
   margin-top: 30px;
 }
@@ -415,7 +420,7 @@ select {
 .result-card:not(:has(.result-image))::before {
   content: "";
   width: 100%;
-  aspect-ratio: 231.292 / 252;
+  aspect-ratio: 0.93;
   border-bottom: 3px solid var(--surface);
   background: #000202 url("/assets/no-image.svg") center / 90px 90px no-repeat;
 }
@@ -441,6 +446,8 @@ select {
 }
 
 .result-content h3 {
+  display: -webkit-box;
+  min-height: 2.64em;
   margin: 0;
   overflow: hidden;
   font-family: "Ancizar Sans:SemiBold", Arial, sans-serif;
@@ -449,7 +456,9 @@ select {
   letter-spacing: -0.02em;
   line-height: 1.32;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .load-more {
@@ -656,6 +665,10 @@ footer p {
   .filters > div {
     width: auto;
     flex: 1;
+  }
+
+  .filters > div:last-child {
+    width: auto;
   }
 
   .letter-buttons {
