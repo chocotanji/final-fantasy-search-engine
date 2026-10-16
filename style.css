@@ -663,6 +663,10 @@ footer p {
     flex-direction: column;
   }
 
+  #search-form {
+    flex: 0 1 auto;
+  }
+
   .filters > div:first-child,
   .filters > div:last-child {
     width: auto;
