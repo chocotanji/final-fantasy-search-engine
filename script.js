@@ -253,7 +253,7 @@ async function loadGames() {
 function updateLoadMoreLabel(loading = false) {
   const remaining = totalCount - resultsContainer.children.length;
   const count = Math.min(PAGE_SIZE, Math.max(0, remaining));
-  loadMoreButton.textContent = `${loading ? "Loading" : "Load"} ${count} more`;
+  loadMoreButton.textContent = `${loading ? "Loading" : "Load"} ${count} More`;
 }
 
 // Search and display results.
