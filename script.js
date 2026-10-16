@@ -399,6 +399,7 @@ function renderProfile(item, loading = false) {
 
   const title = document.createElement("h2");
   title.id = "profile-title";
+  title.tabIndex = -1;
   title.textContent = item.name || "Unnamed entry";
   summary.appendChild(title);
 
@@ -473,6 +474,7 @@ async function openProfile(item) {
   renderProfile(initialProfile, needsDetails);
   profileDialog.scrollTop = 0;
   profileDialog.showModal();
+  profileContent.querySelector("#profile-title").focus();
 
   if (!needsDetails) return;
 
