@@ -559,8 +559,8 @@ function showResults(items, append = false) {
     ? ""
     : "No results found. Try another search.";
 
-  resultCount.textContent = displayedCount
-    ? `${displayedCount} result(s)`
+  resultCount.textContent = totalCount
+    ? `${totalCount} result(s)`
     : "";
 
   // Only show Load more when additional results may exist.
