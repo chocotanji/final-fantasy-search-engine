@@ -211,7 +211,7 @@ main {
 }
 
 .filters > div:first-child {
-  width: 97.313px;
+  width: 118px;
 }
 
 .filters > div:last-child {
@@ -718,6 +718,7 @@ footer p {
 
   main {
     padding-top: 24px;
+    padding-bottom: 56px;
   }
 
   .control-panel,
@@ -730,11 +731,11 @@ footer p {
   .control-panel,
   .alphabet-index,
   .results-section {
-    padding: 20px;
+    padding: 16px;
   }
 
   .letter-buttons {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(42px, 1fr));
     gap: 10px;
   }
 
