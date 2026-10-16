@@ -1,6 +1,6 @@
 
 const API_URL = "/api/moogle";
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 18;
 
 // Find the HTML elements.
 const searchForm = document.querySelector("#search-form");

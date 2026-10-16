@@ -1,58 +1,58 @@
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MOOGLE | Final Fantasy Search</title>
+  <meta name="theme-color" content="#000101">
+  <title>Final Fantasy Search Engine</title>
   <link rel="stylesheet" href="style.css">
-  <script src="script.js" defer></script>
+  <script type="module" src="/script.js"></script>
 </head>
-<body>
+<body id="top">
   <header class="site-header">
-    <a class="logo" href="#">MOOGLE<span>®</span></a>
-    <span class="header-label">FINAL FANTASY DATABASE</span>
+    <a class="logo" href="#top" aria-label="Final Fantasy Search Engine home">
+      <img src="/assets/moogle-logo.svg" alt="">
+    </a>
+    <h1><span>FINAL FANTASY </span>search engine</h1>
+    <p class="subtitle"><span>Your guide to the world of</span> <span class="fg-inline-italic">Final Fantasy.</span></p>
   </header>
 
   <main>
-    <section class="hero">
-      <p class="eyebrow">YOUR ADVENTURE STARTS HERE</p>
-      <h1>Explore the worlds<br>of Final Fantasy.</h1>
-      <p class="subtitle">
-        Discover games, characters, and monsters across the franchise.
-      </p>
+    <section class="hero" aria-label="Search controls">
+      <div class="control-panel">
+        <div class="filters">
+          <div>
+            <label for="category-filter">Category</label>
+            <select id="category-filter">
+              <option value="all">All</option>
+              <option value="games">Games</option>
+              <option value="characters">Characters</option>
+              <option value="monsters">Monsters</option>
+            </select>
+          </div>
 
-      <form id="search-form">
-        <div class="search-field">
-          <label class="sr-only" for="search-input">
-            Search by name
-          </label>
-          <input
-            id="search-input"
-            type="search"
-            placeholder="Search Cloud, Bomb, Final Fantasy..."
-          >
-        </div>
-        <button type="submit">Search</button>
-      </form>
-
-      <div class="filters">
-        <div>
-          <label for="category-filter">Category</label>
-          <select id="category-filter">
-            <option value="all">All</option>
-            <option value="games">Games</option>
-            <option value="characters">Characters</option>
-            <option value="monsters">Monsters</option>
-          </select>
+          <div>
+            <label for="game-filter">Games</label>
+            <select id="game-filter">
+              <option value="">All</option>
+            </select>
+          </div>
         </div>
 
-        <div>
-          <label for="game-filter">Game</label>
-          <select id="game-filter">
-            <option value="">All games</option>
-          </select>
-        </div>
+        <form id="search-form">
+          <div class="search-field">
+            <label class="sr-only" for="search-input">
+              Search by name
+            </label>
+            <input
+              id="search-input"
+              type="search"
+              placeholder="Search games, characters, or monsters..."
+            >
+          </div>
+          <button type="submit">Search</button>
+        </form>
       </div>
 
       <nav id="alphabet-index" class="alphabet-index" aria-label="Browse by first letter" hidden>
@@ -63,7 +63,7 @@
 
     <section class="results-section">
       <div class="results-heading">
-        <h2>Search results</h2>
+        <h2>Search Results</h2>
         <span id="result-count"></span>
       </div>
 
@@ -74,10 +74,14 @@
       <div id="results" class="results-grid"></div>
 
       <button id="load-more" class="load-more" hidden>
-        Load more
+        Load More...
       </button>
     </section>
   </main>
+
+  <a class="back-to-top" href="#top" aria-label="Back to top">
+    <img src="/assets/back-to-top.svg" alt="">
+  </a>
 
   <dialog id="profile-dialog" class="profile-dialog" aria-labelledby="profile-title">
     <button id="profile-close" class="profile-close" type="button" aria-label="Close profile">×</button>
