@@ -511,7 +511,9 @@ select {
 }
 
 .profile-dialog {
-  position: relative;
+  position: fixed;
+  inset: 0;
+  margin: auto;
   width: min(820px, calc(100vw - 32px));
   max-width: none;
   max-height: calc(100dvh - 32px);

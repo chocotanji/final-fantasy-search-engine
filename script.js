@@ -471,6 +471,7 @@ async function openProfile(item) {
   const needsDetails = ["characters", "monsters"].includes(profileType) && item.id;
 
   renderProfile(initialProfile, needsDetails);
+  profileDialog.scrollTop = 0;
   profileDialog.showModal();
 
   if (!needsDetails) return;
