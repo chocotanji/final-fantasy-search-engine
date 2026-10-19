@@ -461,22 +461,7 @@ function renderProfile(item, loading = false) {
         const label = document.createElement("dt");
         label.textContent = formatProfileLabel(key);
         const text = document.createElement("dd");
-        const bulletItems = Array.isArray(value)
-          ? value
-          : typeof value === "string" && value.includes(",")
-            ? value.split(",").map((entry) => entry.trim()).filter(Boolean)
-            : null;
-        if (bulletItems?.length) {
-          const valueList = document.createElement("ul");
-          bulletItems.forEach((entry) => {
-            const listItem = document.createElement("li");
-            listItem.textContent = formatProfileValue(entry);
-            valueList.appendChild(listItem);
-          });
-          text.appendChild(valueList);
-        } else {
-          text.textContent = formatProfileValue(value);
-        }
+        text.textContent = formatProfileValue(value);
         row.append(label, text);
         detailList.appendChild(row);
       });

@@ -636,15 +636,6 @@ select {
   overflow-wrap: anywhere;
 }
 
-.profile-details dd ul {
-  margin: 0;
-  padding-inline-start: 1.25em;
-}
-
-.profile-details dd li + li {
-  margin-top: 2px;
-}
-
 .sr-only {
   position: absolute;
   width: 1px;
