@@ -461,7 +461,17 @@ function renderProfile(item, loading = false) {
         const label = document.createElement("dt");
         label.textContent = formatProfileLabel(key);
         const text = document.createElement("dd");
-        text.textContent = formatProfileValue(value);
+        if (Array.isArray(value)) {
+          const valueList = document.createElement("ul");
+          value.forEach((entry) => {
+            const listItem = document.createElement("li");
+            listItem.textContent = formatProfileValue(entry);
+            valueList.appendChild(listItem);
+          });
+          text.appendChild(valueList);
+        } else {
+          text.textContent = formatProfileValue(value);
+        }
         row.append(label, text);
         detailList.appendChild(row);
       });
