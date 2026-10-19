@@ -461,9 +461,14 @@ function renderProfile(item, loading = false) {
         const label = document.createElement("dt");
         label.textContent = formatProfileLabel(key);
         const text = document.createElement("dd");
-        if (Array.isArray(value)) {
+        const bulletItems = Array.isArray(value)
+          ? value
+          : key === "role" && typeof value === "string"
+            ? value.split(",").map((role) => role.trim()).filter(Boolean)
+            : null;
+        if (bulletItems?.length) {
           const valueList = document.createElement("ul");
-          value.forEach((entry) => {
+          bulletItems.forEach((entry) => {
             const listItem = document.createElement("li");
             listItem.textContent = formatProfileValue(entry);
             valueList.appendChild(listItem);
