@@ -463,8 +463,8 @@ function renderProfile(item, loading = false) {
         const text = document.createElement("dd");
         const bulletItems = Array.isArray(value)
           ? value
-          : key === "role" && typeof value === "string"
-            ? value.split(",").map((role) => role.trim()).filter(Boolean)
+          : typeof value === "string" && value.includes(",")
+            ? value.split(",").map((entry) => entry.trim()).filter(Boolean)
             : null;
         if (bulletItems?.length) {
           const valueList = document.createElement("ul");
